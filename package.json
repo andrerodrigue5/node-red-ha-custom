@@ -1,0 +1,22 @@
+{
+    "name": "@andrerodrigue5/node-red-ha-custom",
+    "version": "1.0.0",
+    "description": "A custom Node-RED node for Home Assistant",
+    "main": "index.js",
+    "node-red": {
+        "nodes": {
+            "threeway": "threeway/threeway.js"
+        }
+    },
+    "dependencies": {
+        "ws": "^8.18.1"
+    },
+    "keywords": [
+        "node-red",
+        "home-assistant",
+        "threeway",
+        "andrerodrigue5"
+    ],
+    "author": "André Rodrigues <andrerodrigues@andrerodrigues.com>",
+    "license": "MIT"
+}
