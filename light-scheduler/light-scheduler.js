@@ -263,11 +263,6 @@ module.exports = (RED) => {
 
         let currentMinute = null;
         const changeIdList = [];
-
-        const dateTemp = new Date();
-        const hourTemp = parseInt(dateTemp.getHours());
-        const minuteTemp = parseInt(dateTemp.getMinutes());
-
         setInterval(() => {
             const dateNow = new Date();
             const hourNow = parseInt(dateNow.getHours());
