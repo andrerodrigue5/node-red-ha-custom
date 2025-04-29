@@ -89,14 +89,21 @@ module.exports = (RED) => {
     }
 
     const suntimeValue = ['sunrise', 'sunset'];
+    const runTypeValue = ['after', 'before'];
     function validateGroup(group, suntime) {
         return typeof group === 'object' &&
             'type_on' in group &&
+            'run_on' in group &&
+            typeof group.run_on === 'object' &&
+            'type' in group.run_on &&
+            'minute' in group.run_on &&
             'hour_on' in group &&
-            'timeout_on' in group &&
             'type_off' in group &&
+            'run_off' in group &&
+            typeof group.run_off === 'object' &&
+            'type' in group.run_off &&
+            'minute' in group.run_off &&
             'hour_off' in group &&
-            'timeout_off' in group &&
             'entity' in group &&
             (
                 (suntimeValue.includes(group.type_on) && suntime) ||
@@ -109,13 +116,21 @@ module.exports = (RED) => {
             group.entity.length > 0;
     }
 
-    function addMinutes(hourString, minuteAdd) {
-        const [h, m] = hourString.split(':').map(Number);
-        const data = new Date(0, 0, 0, h, m);
-        data.setMinutes(data.getMinutes() + minuteAdd);
-        const hora = String(data.getHours()).padStart(2, '0');
-        const minuto = String(data.getMinutes()).padStart(2, '0');
-        return `${hora}:${minuto}`;
+    function addMinutes(hour, minuteAdd) {
+        const h = parseInt(hour.hour);
+        const m = parseInt(hour.minute);
+        const date = new Date(0, 0, 0, h, m);
+        date.setMinutes(date.getMinutes() + parseInt(minuteAdd));
+        const newHour = parseInt(date.getHours());
+        const newMinute = parseInt(date.getMinutes());
+        return {
+            hour: newHour,
+            minute: newMinute
+        };
+    }
+    function subtractMinutes(hour, minuteSubtract) {
+        minuteSubtract = minuteSubtract.replace(/^\-/, '');
+        return addMinutes(hour, minuteSubtract * -1);
     }
 
     function filterEntity(entityList) {
@@ -131,7 +146,7 @@ module.exports = (RED) => {
         return entityId;
     }
     function andrerodrigue5LightScheduler(config) {
-        let wsId = 20000;
+        let wsId = 1;
         RED.nodes.createNode(this, config);
         const node = this;
         
@@ -140,7 +155,7 @@ module.exports = (RED) => {
         // SUN
         const latitude = config.latitude;
         const longitude = config.longitude;
-        const suntime = getSunTimes(latitude, longitude, 0);
+        const suntime = getSunTimes(latitude, longitude);
         
         let groupTemp = config.group;
         try {
@@ -168,23 +183,27 @@ module.exports = (RED) => {
             let turnOn;
             if(suntimeValue.includes(item.type_on)) {
                 turnOn = item.type_on === 'sunrise' ? suntime.sunrise : suntime.sunset;
-                turnOn = item.timeout_on > 0 ? addMinutes(turnOn, item.timeout_on) : turnOn;
+                if(runTypeValue.includes(item.run_on.type) && /^[0-9]{1,}$/.test(item.run_on.minute)) {
+                    turnOn = item.run_on.type === 'after' ? addMinutes(turnOn, item.run_on.minute) : subtractMinutes(turnOn, item.run_on.minute);
+                }
             } else {
                 turnOnSplit = item.hour_on.split(':');
                 turnOn = {
-                    hour: turnOnSplit[0],
-                    minute: turnOnSplit[1],
+                    hour: parseInt(turnOnSplit[0]),
+                    minute: parseInt(turnOnSplit[1]),
                 };
             }
             let turnOff;
             if(suntimeValue.includes(item.type_off)) {
                 turnOff = item.type_off === 'sunrise' ? suntime.sunrise : suntime.sunset;
-                turnOff = item.timeout_off > 0 ? addMinutes(turnOff, item.timeout_off) : turnOff;
+                if(runTypeValue.includes(item.run_off.type) && /^[0-9]{1,}$/.test(item.run_off.minute)) {
+                    turnOff = item.run_off.type === 'after' ? addMinutes(turnOff, item.run_off.minute) : subtractMinutes(turnOff, item.run_off.minute);
+                }
             } else {
                 turnOffSplit = item.hour_off.split(':');
                 turnOff = {
-                    hour: turnOffSplit[0],
-                    minute: turnOffSplit[1],
+                    hour: parseInt(turnOffSplit[0]),
+                    minute: parseInt(turnOffSplit[1]),
                 };
             }
 
@@ -204,7 +223,7 @@ module.exports = (RED) => {
                 entity: grouped
             });
         }
-        
+
         let propertyTemp = config.property;
         try {
             propertyTemp = JSON.parse(propertyTemp);
@@ -245,20 +264,14 @@ module.exports = (RED) => {
         let currentMinute = null;
         const changeIdList = [];
 
-        // const dateTemp = new Date();
-        // const hourTemp = dateTemp.getHours();
-        // const minuteTemp = dateTemp.getMinutes();
-        // group.push({
-        //     id: 4,
-        //     on: { hour: hourTemp, minute: minuteTemp },
-        //     off: { hour: hourTemp, minute: minuteTemp + 1 },
-        //     entity: {'input_boolean': [ 'input_boolean.luz_00_00', 'input_boolean.luz_21_30_02' ]}
-        // });
+        const dateTemp = new Date();
+        const hourTemp = parseInt(dateTemp.getHours());
+        const minuteTemp = parseInt(dateTemp.getMinutes());
 
         setInterval(() => {
             const dateNow = new Date();
-            const hourNow = dateNow.getHours();
-            const minuteNow = dateNow.getMinutes();
+            const hourNow = parseInt(dateNow.getHours());
+            const minuteNow = parseInt(dateNow.getMinutes());
             if(minuteNow === currentMinute) {
                 return;
             }
@@ -267,13 +280,11 @@ module.exports = (RED) => {
             for(const item of group) {
                 if(item.on.hour === hourNow && item.on.minute === minuteNow) {
                     runEvent(item.entity, 'on', hourNow + ':' + minuteNow);
-                    console.log('Ligou = ' + hourNow + ':' + minuteNow);
                 } else if(item.off.hour === hourNow && item.off.minute === minuteNow) {
                     runEvent(item.entity, 'off', hourNow + ':' + minuteNow);
-                    console.log('Desligou = ' + hourNow + ':' + minuteNow);
                 }
             }
-        }, 1000);
+        }, 50000);
 
         function runEvent(entity, action, date) {
             ws = new WebSocket(wsUrl);
@@ -298,9 +309,10 @@ module.exports = (RED) => {
         
                             
                             wsId++;
-                            changeIdList.push(wsId);
+                            const sendId = parseInt('202020' + wsId);
+                            changeIdList.push(sendId);
                             const callServiceMessage = {
-                                id: wsId,
+                                id: sendId,
                                 type: 'call_service',
                                 domain,
                                 service,
@@ -308,11 +320,9 @@ module.exports = (RED) => {
                                     entity_id: entities
                                 }
                             };
-                            console.log(callServiceMessage);
                             ws.send(JSON.stringify(callServiceMessage));
                         }
                     } else if (data.type === 'result' && changeIdList.length > 0 && changeIdList.includes(data.id)) {
-
                         if(data.success) {
                             addEventDate(node, 'Last send in ' + date, 'green');
                         } else {
