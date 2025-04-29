@@ -157,6 +157,7 @@ module.exports = (RED) => {
         const longitude = config.longitude;
         const suntime = getSunTimes(latitude, longitude);
         
+        // GROUP
         let groupTemp = config.group;
         try {
             groupTemp = JSON.parse(groupTemp);
@@ -224,6 +225,19 @@ module.exports = (RED) => {
             });
         }
 
+        // Teste in dev
+        const dateTemp = new Date();
+        const hourTemp = parseInt(dateTemp.getHours());
+        const minuteTemp = parseInt(dateTemp.getMinutes());
+        group.push({
+            id: 100,
+            name: 'Teste',
+            on: { hour: hourTemp, minute: minuteTemp },
+            off: { hour: hourTemp, minute: minuteTemp + 1 },
+            entity: { input_boolean: ['input_boolean.luz_21_30_01', 'input_boolean.luz_21_30_02'] }
+        });
+
+        // PROPERTY
         let propertyTemp = config.property;
         try {
             propertyTemp = JSON.parse(propertyTemp);
@@ -318,6 +332,10 @@ module.exports = (RED) => {
                             ws.send(JSON.stringify(callServiceMessage));
                         }
                     } else if (data.type === 'result' && changeIdList.length > 0 && changeIdList.includes(data.id)) {
+                        const newMsg = RED.util.cloneMessage(property) || {};
+                        RED.util.setMessageProperty(newMsg, 'payload.state', action, true);
+                        node.send(newMsg);
+
                         if(data.success) {
                             addEventDate(node, 'Last send in ' + date, 'green');
                         } else {

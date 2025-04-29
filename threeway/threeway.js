@@ -1,11 +1,11 @@
 const WebSocket = require('ws');
 
 module.exports = (RED) => {
-    const addEventDate = (node, date) => {
+    const addEventDate = (node, text, color) => {
         node.status({
-            fill: 'green',
+            fill: color === undefined ? 'green' : color,
             shape: 'ring',
-            text: date
+            text: text
         });
     };
 
@@ -58,41 +58,91 @@ module.exports = (RED) => {
             res.status(500).json({ error: `Erro ao fazer requisição para o Home Assistant: ${err.message}` });
         }
     });
+
+    function validateGroup(group)
+    {
+        return typeof group === 'object' &&
+            'name' in group &&
+            'entity' in group &&
+            group.entity.length > 0;
+    }
+
+    function filterEntity(entityList) {
+        const allowedDomains = ['switch', 'light', 'fan', 'cover', 'input_boolean'];
+        const entityId = [];
+        for(const item of entityList) {
+            const id = item.id;
+            if(typeof id !== 'string' || !allowedDomains.some(domain => id.startsWith(domain + '.'))) {
+                continue;
+            }
+            entityId.push(id);
+        }
+        return entityId;
+    }
+
+    let wsId = 0;
+    function idPrefix()
+    {
+        wsId++;
+        return parseInt('202020' + wsId);
+    }
     
     function andrerodrigue5Threeway(config) {
-        let wsId = 100;
         RED.nodes.createNode(this, config);
         const node = this;
+
+        const server = RED.nodes.getNode(config.server);
         
-        this.server = RED.nodes.getNode(config.server);
-        let entityIdTemp = config.entities;
+        // GROUP
+        let groupTemp = config.group;
         try {
-            entityIdTemp = JSON.parse(entityIdTemp);
+            groupTemp = JSON.parse(groupTemp);
         } catch (e) {
-            this.error("Erro ao analisar lista de entidades: " + e.message);
-            entityIdTemp = [];
+            this.error("Erro ao analisar lista de grupos: " + e.message);
+            groupTemp = [];
         }
-        if(entityIdTemp.length === 0) {
+        if(groupTemp.length === 0) {
             return;
         }
+
+        const group = {};
+        const entityIdGroup = {};
+        const monitoredEntities = [];
+        let idGroup = 0;
+        for(const item of groupTemp) {
+            if(!validateGroup(item)) {
+                continue;
+            }
+
+            const entity = filterEntity(item.entity);
+            if(entity.length === 0) {
+                continue;
+            }
+            idGroup++;
+
+            for(const entityId of entity) {
+                entityIdGroup[entityId] = idGroup;
+                monitoredEntities.push(entityId)
+            }
+
+            group[idGroup] = {
+                id: idGroup,
+                name: item.name,
+                entity: entity
+            };
+        }
+
+        this.group = group;
+        this.entityIdGroup = entityIdGroup;
+        this.monitoredEntities = monitoredEntities;
         
+        // PROPERTY
         let propertyTemp = config.property;
         try {
             propertyTemp = JSON.parse(propertyTemp);
         } catch (e) {
             this.error("Erro ao analisar lista de propriedades: " + e.message);
             propertyTemp = [];
-        }
-
-        const allowedDomains = ['switch', 'light', 'fan', 'cover', 'input_boolean'];
-        
-        this.entityId = [];
-        for(const item of entityIdTemp) {
-            const id = item.id;
-            if(typeof id !== 'string' || !allowedDomains.some(domain => id.startsWith(domain + '.'))) {
-                continue;
-            }
-            this.entityId.push(id);
         }
 
         const flow = this.context().flow;
@@ -116,10 +166,10 @@ module.exports = (RED) => {
                 RED.util.setMessageProperty(property, item.key, item.value, true);
             }
         }
-        RED.util.setMessageProperty(property, 'payload.entity_id', this.entityId, true);
+        // RED.util.setMessageProperty(property, 'payload.entity_id', this.entityId, true);
 
-        const wsHost = this.server.credentials.host.replace(/https?:\/\//, '');
-        const wsToken = this.server.credentials.access_token;
+        const wsHost = server.credentials.host.replace(/https?:\/\//, '');
+        const wsToken = server.credentials.access_token;
 
         const wsUrl = `ws://${wsHost}/api/websocket`;
         let ws;
@@ -127,8 +177,7 @@ module.exports = (RED) => {
         let stateChangedId = null;
         let currentUserId = null;
 
-        let changeIdList = [];
-
+        const changeIdList = [];
         function connect() {
             ws = new WebSocket(wsUrl);
 
@@ -150,29 +199,30 @@ module.exports = (RED) => {
 
                     if (data.type === 'auth_ok') {
                         authSuccessful = true;
-                        wsId++;
-                        currentUserId = wsId;
+                        currentUserId = idPrefix();
                         ws.send(JSON.stringify({
                             id: currentUserId,
                             type: "auth/current_user"
                         }));
-                    } else if (data.type === 'result' && data.id === currentUserId) {
+                    } else if(data.type === 'result' && data.id === currentUserId){
                         nodeRedUserId = data.result.id;
-                        wsId++;
-                        stateChangedId = wsId;
+                        stateChangedId = idPrefix();
                         ws.send(JSON.stringify({
                             "id": stateChangedId,
                             "type": "subscribe_events",
                             "event_type": "state_changed"
                         }));
-                    } else if (data.type === 'event' && data.event.event_type === 'state_changed' && node.entityId.includes(data.event.data.entity_id)) {
+                    } else if (data.type === 'event' && data.event.event_type === 'state_changed' && node.monitoredEntities.includes(data.event.data.entity_id)) {
                         if(!('context' in data.event) || !('user_id' in data.event.context) || data.event.context.user_id === undefined || data.event.context.user_id === nodeRedUserId) {
                             return;
                         }
                         const newState = data.event.data.new_state.state;
                         const dateLastChanged = data.event.data.new_state.last_changed;
                         const realEntity = data.event.data.entity_id;
-                        const otherEntity = node.entityId.filter(entityId => entityId !== realEntity);
+                        const idGroup = node.entityIdGroup[realEntity];
+                        const entityGroup = node.group[idGroup];
+                        const entityList = entityGroup.entity;
+                        const otherEntity = entityList.filter(entityId => entityId !== realEntity);
 
                         const newMsg = RED.util.cloneMessage(property) || {};
                         RED.util.setMessageProperty(newMsg, 'payload.state', newState, true);
@@ -187,21 +237,18 @@ module.exports = (RED) => {
                             if (!grouped[domain]) grouped[domain] = [];
                             grouped[domain].push(entity);
                         }
-                        
-                        changeIdList = [];
-                        for (const [domain, entities] of Object.entries(grouped)) {
+
+                        Object.entries(grouped).forEach(([domain, entities]) => {
                             let service;
                             if (domain === 'cover') {
                                 service = newState === 'on' ? 'open_cover' : 'close_cover';
                             } else {
                                 service = newState === 'on' ? 'turn_on' : 'turn_off';
                             }
-
-                            
-                            wsId++;
-                            changeIdList.push(wsId);
+                            const idUse = idPrefix();
+                            changeIdList.push(idUse);
                             const callServiceMessage = {
-                                id: wsId,
+                                id: idUse,
                                 type: 'call_service',
                                 domain,
                                 service,
@@ -210,8 +257,8 @@ module.exports = (RED) => {
                                 }
                             };
                             ws.send(JSON.stringify(callServiceMessage));
-                        }
-                        addEventDate(node, dateLastChanged);
+                        });
+                        addEventDate(node, dateLastChanged, 'green');
                         node.send(newMsg);
                     } else if (data.type === 'result' && changeIdList.length > 0 && changeIdList.includes(data.id)) {
                         // Adicionar futuramente um validação
