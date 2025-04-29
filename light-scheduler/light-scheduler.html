@@ -1,0 +1,933 @@
+<script type="text/html" data-template-name="andrerodrigue5-light-scheduler">
+    <style>
+        p.label {
+            margin-bottom: 0;
+        }
+        .group {
+            width: 100%;
+        }
+        .group .zero {
+            width: calc(100% - 42px);
+            padding: 20px;
+            border: 1px solid #CCC;
+            text-align: center;
+            border-radius: 4px;
+            color: #999;
+            display: none;
+        }
+        .group .label {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+        .group .group-list .item {
+            width: calc(100% - 22px);
+            padding: 5px 10px 10px;
+            border: 1px solid #CCC;
+            border-top: none;
+        }
+        .group .group-list .item:first-child {
+            border-radius: 4px 4px 0 0;
+            border-top: 1px solid #CCC;
+        }
+        .group .group-list .item:last-child {
+            border-radius: 0 0 4px 4px;
+        }
+        .group .group-list .item:only-child {
+            border-radius: 4px;
+        }
+        .group .group-list .item .block-group-name {
+            margin-bottom: 20px;
+        }
+        .group .group-list .item p.subtitle {
+            width: 100%;
+            font-weight: bold;
+            margin-top: 10px;
+            padding-top: 5px;
+            border-top: 1px solid #CCC;
+            margin-bottom: 0;
+        }
+        .group .group-list .item label.groups-title {
+            width: 100%;
+            padding-top: 10px;
+            border-top: 1px solid #CCC;
+        }
+        .group .group-list .item .item-header {
+            width: 100%;
+            height: 38px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            border-bottom: 1px solid #CCC;
+            padding: 0 10px;
+            border-radius: 4px 4px 0 0;
+            margin: -5px 0 20px -10px;
+            background: #F6F6F6;
+        }
+        .group .group-list .item .item-header p {
+            height: 38px;
+            line-height: 38px;
+            flex-grow: 1;
+            flex-basis: 0%;
+            margin: 0
+        }
+        .group .group-list .item .item-header i {
+            width: 25px;
+            height: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #CCC;
+            border-radius: 4px;
+            color: #999;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+        .group .group-list .item .group-name {
+            width: 100%;
+            display: flex;
+            flex-direction: row;
+            flex-wrap: wrap;
+            align-items: center;
+            margin: 10px 0;
+        }
+
+        .group .group-list .item .target-input {
+            display: flex;
+            flex-grow: 1;
+            flex-basis: 0%;
+            position: relative;
+        }
+        .group .group-list .item .target-input .search-icon {
+            position: absolute;
+            z-index: 2;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .group .group-list .item .target-input .group-entity-id-input {
+            width: 100%;
+            padding-left: 30px;
+            border-radius: 4px 4px 0 0;
+        }
+        .group .group-list .item > .red-ui-editableList > .red-ui-editableList-border {
+            border-top: none;
+            border-radius: 0 0 4px 4px;
+        }
+        .group .group-list .item .group-type-time {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        .group .group-list .item .group-run,
+        .group .group-list .item .group-hour {
+            margin-top: 10px;
+            display: none;
+        }
+        .group .group-list .item .group-hour input {
+            width: 100px;
+        }
+        .group .group-list .item .group-run select {
+            width: 100px;
+        }
+        .group .group-list .item .group-run input {
+            width: 140px;
+            display: none;
+        }
+        p.list-zero {
+            width: 100%;
+            margin-top: 10px;
+            text-align: center;
+            color: #999;
+            display: none;
+        }
+    </style>
+    <div class="form-row">
+        <label for="node-input-name">Name</label>
+        <input type="text" id="node-input-name" placeholder="Nome">
+    </div>
+    <div class="form-row">
+        <label for="node-input-server">Server</label>
+        <input type="text" id="node-input-server">
+    </div>
+    <div class="form-row">
+        <label for="node-input-latitude">Latitude</label>
+        <input type="text" id="node-input-latitude" placeholder="Latitude">
+    </div>
+    <div class="form-row">
+        <label for="node-input-longitude">Longitude</label>
+        <input type="text" id="node-input-longitude" placeholder="Longitude">
+    </div>
+    <div class="form-row">
+        <div class="group">
+            <p class="label">Groups</p>
+            <div class="zero" id="group-container-zero">Sem grupos no momento</div>
+            <div class="group-list" id="group-container"></div>
+        </div>
+        <button type="button" id="button-add-group" class="red-ui-button red-ui-button-small red-ui-editableList-addButton" style="margin-top: 4px; margin-right: 5px;" title="adicionar um grupo"><i class="fa fa-plus"></i><span> adicionar grupo</span></button>
+        <input type="hidden" id="node-input-group">
+    </div>
+    <div class="form-row">
+        <div class="red-ui-editableList" id="property-container">
+            <p id="property-container-zero" class="list-zero">Sem propriedades no momento</p>
+        </div>
+        <input type="hidden" id="node-input-property">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="andrerodrigue5-light-scheduler">
+    <p data-i18n="andrerodrigue5-light-scheduler.help.description"></p>
+
+    <h3>Configuration</h3>
+    <dl class="message-properties">
+        <dt data-i18n="andrerodrigue5-light-scheduler.label.name"></dt>
+        <dd data-i18n="andrerodrigue5-light-scheduler.help.config.name"></dd>
+
+        <dt data-i18n="andrerodrigue5-light-scheduler.label.server"></dt>
+        <dd data-i18n="andrerodrigue5-light-scheduler.help.config.server"></dd>
+
+        <dt data-i18n="andrerodrigue5-light-scheduler.label.targets"></dt>
+        <dd data-i18n="andrerodrigue5-light-scheduler.help.config.targets"></dd>
+
+        <dt data-i18n="andrerodrigue5-light-scheduler.label.outputProperties"></dt>
+        <dd data-i18n="andrerodrigue5-light-scheduler.help.config.outputProperties"></dd>
+    </dl>
+
+    <h3>Outputs</h3>
+    <dl class="message-properties">
+        <dt><code>payload.entity_list</code></dt>
+        <dd data-i18n="andrerodrigue5-light-scheduler.help.outputs.entityList"></dd>
+
+        <dt><code>payload.*</code></dt>
+        <dd data-i18n="andrerodrigue5-light-scheduler.help.outputs.customProps"></dd>
+    </dl>
+
+    <h3>References</h3>
+    <ul>
+        <li><a href="https://andrerodrigues.com/node-rede/light-scheduler" target="_blank" data-i18n="andrerodrigue5-light-scheduler.help.references"></a></li>
+    </ul>
+</script>
+
+<script type="text/javascript">
+    serverStartName = sessionEntityListGetId();
+    idProp = 0;
+    const sunValueList = ['sunrise', 'sunset'];
+    const runValueList = ['after', 'before'];
+    let buttonAddGroup;
+    let blockGroupContainer;
+    let blockGroupContainerZero;
+
+    let blockPropertyContainer;
+    let blockPropertyContainerZero;
+
+    let availableEntities = [];
+
+    RED.nodes.registerType('andrerodrigue5-light-scheduler', {
+        category: 'home assistant',
+        color: '#41bdf5',
+        defaults: {
+            name: { value: "" },
+            server: { value: serverStartName, type: "server", required: true },
+            group: { value: "[]", required: true },
+            latitude: { value: "", required: true },
+            longitude: { value: "", required: true },
+            property: { value: "[]" },
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "light-scheduler.svg",
+        label: function() {
+            return this.name || "Light entities";
+        },
+        paletteLabel: 'Light Scheduler',
+        description: 'Create a virtual 3-way switch behavior between two or more Home Assistant entities.',
+        oneditprepare: function() {
+            const node = this;
+
+            // SERVER
+            if(serverStartName) {
+                availableEntities = [];
+                fetchEntities(serverStartName);
+            }
+            setTimeout(() => {
+                $("#node-input-server").on('change', function() {
+                    sessionEntityListDelete();
+                    const newServerId = $(this).val();
+                    availableEntities = [];
+                    removeAllEntity();
+                    fetchEntities(newServerId);
+                });
+            }, 1000);
+
+            // ADD GROUP
+            let groupListInit;
+            try {
+                groupListInit = JSON.parse(node.group || "[]");
+            } catch (err) {
+                groupListInit = [];
+            }
+            
+            buttonAddGroup = $('#button-add-group');
+            blockGroupContainer = $('#group-container');
+            blockGroupContainerZero = $('#group-container-zero');
+            let idGroup = 0;
+
+            if(groupListInit.length === 0) {
+                blockGroupContainerZero.show();
+            } else {
+                for(const item of groupListInit) {
+                    addNewGroup(item);
+                }
+            }
+
+            function addNewGroup(data) {
+                idGroup++;
+                blockGroupContainer.append(createHtmlItem(idGroup, data));
+                addEventItem(idGroup, data);
+                addEntityList(idGroup, data);
+                addAutocompleteItem(idGroup);
+            }
+
+            buttonAddGroup.click(function(){
+                blockGroupContainerZero.hide();
+                addNewGroup([]);
+            });
+
+            // PROPERTY
+            let propertyListInit;
+            try {
+                propertyListInit = JSON.parse(node.property || "[]");
+            } catch (err) {
+                propertyListInit = [];
+            }
+            renderPropertyContainer(propertyListInit);
+        },
+        oneditsave: function() {
+            const groups = $('#group-container .item');
+            let groupReturn = [];
+            for(const item  of groups) {
+                const name = $('.input-group-name', item).val();
+                const typeOn = $('.input-group-type-on', item).val();
+                const runOnType = $('.input-group-run-on-type', item).val();
+                const runOnMinute = $('.input-group-run-on-minute', item).val();
+                const hourOn = $('.input-group-hour-on', item).val();
+                const typeOff = $('.input-group-type-off', item).val();
+                const runOffType = $('.input-group-run-off-type', item).val();
+                const runOffMinute = $('.input-group-run-off-minute', item).val();
+                const hourOff = $('.input-group-hour-off', item).val();
+                const entityList = $('.block-entity-list li', item);
+                const entityId = [];
+                for(const entity of entityList) {
+                    entityId.push({
+                        id: entity.getAttribute('data-id'),
+                        friendly_name: entity.getAttribute('data-name')
+                    });
+                }
+                groupReturn.push({
+                    'name': name,
+                    'type_on': typeOn,
+                    'run_on': {
+                        type: runOnType,
+                        minute: runOnMinute
+                    },
+                    'hour_on': hourOn,
+                    'type_off': typeOff,
+                    'run_off': {
+                        type: runOffType,
+                        minute: runOffMinute
+                    },
+                    'hour_off': hourOff,
+                    'entity': entityId,
+                });
+            }
+
+            groupReturn = JSON.stringify(groupReturn);
+            $("#node-input-group").val(groupReturn);
+            this.group = groupReturn;
+
+            // PROPERTY
+            const listPropertyContainer = $("#property-container li");
+            let propertyReturn = [];
+            for(item of listPropertyContainer) {
+                const key = $('.property-key', item).val();
+                const type = $('.property-type', item).val();
+                const value = $('.property-value', item).val();
+                if(typeof key !== 'string' || key === '') {
+                    continue;
+                }
+                propertyReturn.push({key, type, value});
+            }
+            propertyReturn = JSON.stringify(propertyReturn);
+            $("#node-input-property").val(propertyReturn);
+            this.property = propertyReturn;
+        }
+    });
+
+    function removeAllEntity() {
+        const list = $('.block-entity-list');
+        for(const item of list) {
+            const li = $('li', item);
+            const zero = $('.list-zero', item);
+            li.remove();
+            zero.show();
+        }
+    }
+    function clearRemovetedEntity() {
+        const list = $('.block-entity-list');
+        for(const block of list) {
+            const li = $('li', block);
+            for(const item of li) {
+                const id = li.getAttribute('data-id');
+                if(availableEntities.some(entity => entity.id === id)) {
+                    continue;
+                }
+                item.remove();
+            }
+            const length = $('li', block).length;
+            if(length > 0) {
+                continue;
+            }
+            const zero = $('.list-zero', block);
+            zero.show();
+        }
+    }
+    function fetchEntities(serverId) {
+        const blockEntityInput = $('.group-entity-id-input');
+        const blockEntitySpinner = $("#entity-input-spinner");
+        const blockEntityError = $("#entity-input-error");
+        const blockEntityPlaceholder = $("#entity-list-placeholder");
+
+        if (!serverId || serverId === '_ADD_') {
+            availableEntities = [];
+            blockEntityInput.prop('disabled', true).attr('placeholder', 'Selecione um servidor');
+            blockEntitySpinner.hide();
+            blockEntityError.hide();
+            blockEntityPlaceholder.text('Selecione um servidor para carregar entidades').show();
+            removeAllEntity();
+            // configureAutocomplete();
+            return;
+        } else if(sessionEntityListGetId() === serverId) {
+            availableEntities = sessionEntityListGetList();
+            if(availableEntities) {
+                blockEntityInput.prop('disabled', false).attr('placeholder', 'Digite ID ou Nome da Entidade');
+                blockEntityPlaceholder.hide();
+                clearRemovetedEntity();
+                // configureAutocomplete();
+                return;
+            }
+        }
+
+        blockEntityInput.prop('disabled', true).attr('placeholder', 'Carregando entidades...');
+        blockEntitySpinner.show();
+        blockEntityError.hide();
+        blockEntityPlaceholder.text('Carregando...').show();
+
+        $.getJSON(`ha-entities/${serverId}`)
+            .done(function(data) {
+                availableEntities = data;
+                sessionEntityListSave(serverId, data);
+                blockEntityInput.prop('disabled', false).attr('placeholder', 'Digite ID ou Nome da Entidade');
+                blockEntityPlaceholder.hide();
+                clearRemovetedEntity();
+                // configureAutocomplete();
+            })
+            .fail(function(jqXHR, textStatus, errorThrown) {
+                availableEntities = [];
+                blockEntityInput.prop('disabled', true).attr('placeholder', 'Erro ao carregar entidades');
+                blockEntityError.show();
+                blockEntityPlaceholder.text(`Erro: ${jqXHR.responseJSON?.error || errorThrown || 'Falha ao buscar entidades'}`).show();
+                RED.notify(`Erro ao buscar entidades do Home Assistant: ${jqXHR.responseJSON?.error || errorThrown}`, "error");
+                removeAllEntity();
+                // configureAutocomplete();
+            })
+            .always(function() {
+                blockEntitySpinner.hide();
+            });
+    }
+
+    function isEntityAvailable(id) {
+        return availableEntities.find(e => e.id === id);
+    }
+
+    function entityInUse(blockContainer, id) {
+        return $(`li[data-id="${id}"]`, blockContainer).length > 0;
+    }
+
+    function addEntity(blockContainer, input, id, friendlyName) {
+        if (!id || entityInUse(blockContainer, id)) {
+            return;
+        }
+
+        const entityObj = isEntityAvailable(id);
+        if (!entityObj) {
+            RED.notify(`A entidade "${entity}" não existe ou não é válida.`, "error");
+            return;
+        }
+
+        blockContainer.editableList('addItem', {
+            id:id,
+            friendly_name: friendlyName
+        });
+
+        input.val("");
+    }
+
+    function addAutocompleteItem(idGroup) {
+        const blockConteiner = $(`#group-container-item-${idGroup}`);
+        const input = $(`#input-group-entity-id-${idGroup}`);
+        configureAutocomplete(blockConteiner, input);
+        
+        let lastFilteredEntities = [];
+        input.keypress(function(e) {
+            if (e.which === 13) {
+                const menu = input.autocomplete("widget");
+                const focusedItem = menu.find(".ui-state-focus");
+                if (focusedItem.length > 0) {
+                    return;
+                }
+                e.preventDefault();
+                if (lastFilteredEntities.length === 1) {
+                    addEntity(blockConteiner, input, lastFilteredEntities[0].id, lastFilteredEntities[0].friendly_name);
+                    input.autocomplete("close");
+                }
+            }
+        });
+    }
+
+    function getCurrentEntityList(blockConteiner) {
+        const list =  $('li', blockConteiner);
+        if(list.length === 0) {
+            return [];
+        }
+        const returnItem = [];
+        for(const item of list) {
+            returnItem.push({
+                id: item.getAttribute('data-id'),
+                friendly_name: item.getAttribute('data-name')
+            });
+        }
+        return returnItem;
+    }
+
+    function configureAutocomplete(blockConteiner, input) {
+        input.autocomplete({
+            source: function(request, response) {
+                const term = request.term.toLowerCase();
+                const currentEntityList = getCurrentEntityList(blockConteiner);
+                const filtered = availableEntities.filter(availableEntity => {
+                    const notInCurrent = !currentEntityList.some(entity => entity.id === availableEntity.id);
+
+                    const matchesTerm =
+                        availableEntity.id.toLowerCase().includes(term) ||
+                        (availableEntity.friendly_name && availableEntity.friendly_name.toLowerCase().includes(term));
+
+                    return notInCurrent && matchesTerm;
+                });
+                lastFilteredForAutocomplete = filtered;
+                response(filtered.map(e => ({
+                    friendly_name: e.friendly_name,
+                    id: e.id
+                })));
+            },
+            minLength: 0,
+            select: function(event, ui) {
+                event.preventDefault();
+                addEntity(blockConteiner, input, ui.item.id, ui.item.friendly_name);
+                $(this).val('');
+            },
+            focus: function(event, ui) {
+                event.preventDefault();
+            }
+        }).autocomplete("instance")._renderItem = function(ul, item) {
+            return $("<li>")
+                .append(`
+                    <div>
+                        <span style="width: 100%; display: block;">${item.friendly_name}</span>
+                        <span style="width: 100%; display: block; color: #999; font-size: 12px;">${item.id}</span>
+                    </div>
+                `)
+                .appendTo(ul);
+        };
+
+        input.off('click').on('click', function() {
+            if(availableEntities.length > 0) {
+                $(this).autocomplete("search", "");
+            }
+        });
+    }
+
+    function addEntityList(idGroup, data) {
+        const entity = data.entity || [];
+        if(entity.length === 0) {
+            return;
+        }
+        const block = $(`#group-container-item-${idGroup}`);
+        block.editableList('addItems', entity);
+    }
+
+    function addEventItem(idGroup, data) {
+        const valueTypeOn = data.type_on || '';
+        const valueTypeOff = data.type_off || '';
+
+        const valueRunOnType = typeof data === 'object' && 'run_on' in data && 'type' in data.run_on ? data.run_on.type : 'immediate';
+        const valueRunOffType = typeof data === 'object' && 'run_off' in data && 'type' in data.run_off ? data.run_off.type : 'immediate';
+
+        const blockItem = $(`#group-item-${idGroup}`);
+        const blockTitle = $(`#block-group-title-${idGroup}`);
+        const buttonItemRemove = $(`#button-group-remove-${idGroup}`);
+        const blockItemContainer = $(`#group-container-item-${idGroup}`);
+        const blockItemContainerZero = $(`#group-container-item-zero-${idGroup}`);
+        const blockHourOn = $(`#block-group-hour-on-${idGroup}`);
+        const blockHourOff = $(`#block-group-hour-off-${idGroup}`);
+        const blockRunOn = $(`#block-group-run-on-${idGroup}`);
+        const blockRunOff = $(`#block-group-run-off-${idGroup}`);
+
+        const inputName = $(`#input-group-name-${idGroup}`);
+
+        const inputHourOn = $(`#input-group-hour-on-${idGroup}`);
+        const inputHourOff = $(`#input-group-hour-off-${idGroup}`);
+        
+        const inputRunOnMinute = $(`#input-group-run-on-minute-${idGroup}`);
+        const inputRunOffMinute = $(`#input-group-run-off-minute-${idGroup}`);
+
+        const selectTypeOn = $(`#input-group-type-on-${idGroup}`);
+        const selectTypeOff = $(`#input-group-type-off-${idGroup}`);
+
+        const selectRunOnType = $(`#input-group-run-on-type-${idGroup}`);
+        const selectRunOffType = $(`#input-group-run-off-type-${idGroup}`);
+
+        blockItemContainer.editableList({
+            addItem: function(row, index, data) {
+                const li = row.parent();
+                li.attr({
+                    'data-id': data.id,
+                    'data-name': data.friendly_name
+                });
+                blockItemContainerZero.hide();
+                entityHtmlItem(row, data.id, data.friendly_name);
+            },
+            removeItem: function() {
+                const allItems = blockItemContainer.editableList('items');
+                if(allItems.length == 1) {
+                    blockItemContainerZero.show();
+                    return;
+                }
+                blockItemContainerZero.hide();
+            },
+            addButton: false,
+            sortable: true,
+            removable: true,
+            height: 'auto',
+            sortHandle: '.red-ui-editableList-item-handle'
+        });
+        if(data.length === 0) {
+            blockItemContainerZero.show();
+        }
+
+        inputName.change(function(){
+            const value = inputName.val();
+            blockTitle.text(value === '' ? 'Group ' + idGroup : value);
+        });
+
+        selectTypeOn.val(valueTypeOn);
+        selectTypeOff.val(valueTypeOff);
+        selectRunOnType.val(valueRunOnType);
+        selectRunOffType.val(valueRunOffType);
+        
+        if(runValueList.includes(valueRunOnType)) {
+            inputRunOnMinute.show();
+        }
+        if(runValueList.includes(valueRunOffType)) {
+            inputRunOffMinute.show();
+        }
+
+        if(valueTypeOn === 'hour') {
+            blockHourOn.show();
+        } else if(sunValueList.includes(valueTypeOn)) {
+            blockRunOn.show();
+        }
+        if(valueTypeOff === 'hour') {
+            blockHourOff.show();
+        } else if(sunValueList.includes(valueTypeOff)) {
+            blockRunOff.show();
+        }
+        
+        selectTypeOn.change(function() {
+            blockHourOn.hide();
+            inputHourOn.val('');
+            selectRunOnType.val('immediate');
+            inputRunOnMinute.val('');
+            blockRunOn.hide();
+            inputRunOnMinute.hide();
+            const currentValue = selectTypeOn.val();
+            if(currentValue === 'hour') {
+                blockHourOn.show();
+                blockRunOn.hide();
+            } else if(sunValueList.includes(currentValue)) {
+                blockHourOn.hide();
+                blockRunOn.show();
+            }
+        });
+        selectTypeOff.change(function() {
+            inputHourOff.val('');
+            blockHourOff.hide();
+            selectRunOffType.val('immediate');
+            inputRunOffMinute.val('');
+            blockRunOff.hide();
+            inputRunOffMinute.hide();
+            const currentValue = selectTypeOff.val();
+            if(currentValue === 'hour') {
+                blockHourOff.show();
+                blockRunOff.hide();
+            } else if(sunValueList.includes(currentValue)) {
+                blockHourOff.hide();
+                blockRunOff.show();
+            }
+        });
+
+        selectRunOnType.change(function() {
+            inputRunOnMinute.val('');
+            const currentValue = selectRunOnType.val();
+            if(currentValue === 'immediate') {
+                inputRunOnMinute.hide();
+                return;
+            }
+            inputRunOnMinute.show();
+        });
+        selectRunOffType.change(function() {
+            inputRunOffMinute.val('');
+            const currentValue = selectRunOffType.val();
+            if(currentValue === 'immediate') {
+                inputRunOffMinute.hide();
+                return;
+            }
+            inputRunOffMinute.show();
+        });
+
+        buttonItemRemove.click(function(){
+            blockItem.remove();
+            if($('.item', blockGroupContainer).length === 0) {
+                blockGroupContainerZero.show();
+            }
+        });
+    }
+
+    function entityHtmlItem(block, id, friendlyName) {
+        block.append(`
+            <div>
+                <span style="width: 100%; display: block;">${friendlyName}</span>
+                <span style="width: 100%; display: block; color: #999; font-size: 12px;">${id}</span>
+            </div>
+        `);
+    }
+
+    function createHtmlItem(idGroup, data) {
+        const valueName = data.name || '';
+        const title = valueName ? valueName : `Group ${idGroup}`;
+        const runOnMinute = typeof data === 'object' && 'run_on' in data && 'minute' in data.run_on ? data.run_on.minute : '';
+        const runOffMinute = typeof data === 'object' && 'run_off' in data && 'minute' in data.run_off ? data.run_off.minute : '';
+        const hourOn = data.hour_on || '';
+        const hourOff = data.hour_off || '';
+
+        return `
+            <div class="item" id="group-item-${idGroup}">
+                <div class="item-header">
+                    <p id="block-group-title-${idGroup}">${title}</p>
+                    <i class="fa fa-close group-remove" id="button-group-remove-${idGroup}"></i>
+                </div>
+                
+                <div class="form-row block-group-name">
+                    <label for="input-group-name-${idGroup}">Nome grupo</label>
+                    <input type="text" id="input-group-name-${idGroup}" required class="input-group-name" value="${valueName}" placeholder="Group name">
+                </div>
+
+                <div class="form-row">
+                    <p class="subtitle">Turn on:</p>
+                    <label for="group-type-on-${idGroup}">Type</label>
+                    <select class="input-group-type-on" id="input-group-type-on-${idGroup}" required>
+                        <option value="">Select an option</option>
+                        <option value="sunrise">Sunrise</option>
+                        <option value="sunset">Sunset</option>
+                        <option value="hour">Custom time</option>
+                    </select>
+                    <div class="group-run" id="block-group-run-on-${idGroup}">
+                        <label for="input-group-run-on-type-${idGroup}">Run</label>
+                        <select class="input-group-run-on-type" id="input-group-run-on-type-${idGroup}">
+                            <option value="immediate">Immediate</option>
+                            <option value="after">After</option>
+                            <option value="before">Before</option>
+                        </select>
+                        <input type="text" class="input-group-run-on-minute" id="input-group-run-on-minute-${idGroup}" placeholder="Time in minutes" value="${runOnMinute}">
+                    </div>
+                    <div class="group-hour" id="block-group-hour-on-${idGroup}">
+                        <label for="input-group-hour-on-${idGroup}">Hour/Minute</label>
+                        <input type="time" class="input-group-hour-on" required id="input-group-hour-on-${idGroup}" placeholder="00:00" value="${hourOn}">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <p class="subtitle">Turn off:</p>
+                    <label for="input-group-type-off-${idGroup}">Type</label>
+                    <select class="input-group-type-off" id="input-group-type-off-${idGroup}" required class="input-type-off">
+                        <option value="">Select an option</option>
+                        <option value="sunrise">Sunrise</option>
+                        <option value="sunset">Sunset</option>
+                        <option value="hour">Custom time</option>
+                    </select>
+                    <div class="group-run" id="block-group-run-off-${idGroup}">
+                        <label for="input-group-run-off-type-${idGroup}">Run</label>
+                        <select class="input-group-run-off-type" id="input-group-run-off-type-${idGroup}">
+                            <option value="immediate">Immediate</option>
+                            <option value="after">After</option>
+                            <option value="before">Before</option>
+                        </select>
+                        <input class="input-group-run-off-minute" type="text" id="input-group-run-off-minute-${idGroup}" placeholder="Time in minutes" value="${runOffMinute}">
+                    </div>
+                    <div class="group-hour" id="block-group-hour-off-${idGroup}">
+                        <label for="input-group-hour-off-${idGroup}">Hour/Minute</label>
+                        <input type="time" class="input-group-hour-off" required id="input-group-hour-off-${idGroup}" placeholder="00:00" value="${hourOff}">
+                    </div>
+                </div>
+
+                <label for="input-group-entity-id-${idGroup}" class="groups-title">Targets</label>
+                <div class="target-input">
+                    <label for="input-group-entity-id-${idGroup}" class="search-icon"><i class="fa fa-search"></i></label>
+                    <input type="text" class="group-entity-id-input" id="input-group-entity-id-${idGroup}" placeholder="Digite o ID ou Nome da entidade">
+                </div>
+
+                <div class="red-ui-editableList block-entity-list" id="group-container-item-${idGroup}">
+                    <p id="group-container-item-zero-${idGroup}" class="list-zero">Sem entidades no momento</p>
+                </div>
+            </div>
+        `;
+    }
+    
+    function renderPropertyContainer(propertyListInit){
+        blockPropertyContainer = $("#property-container");
+        blockPropertyContainerZero = $("#property-container-zero");
+        blockPropertyContainer.editableList({
+            addItem: function(row, index, data) {
+                const type = 'type' in data ? data.type : 'msg';
+                const key = 'key' in data ? data.key : '';
+                const value = 'value' in data ? data.value : '';
+                blockPropertyContainerZero.hide();
+                propertyHtmlItem(row, type, key, value);
+            },
+            removeItem: function() {
+                const allItems = blockPropertyContainer.editableList('items');
+                if(allItems.length == 1) {
+                    blockPropertyContainerZero.show();
+                    return;
+                }
+                blockPropertyContainerZero.hide();
+            },
+            header: $("<div>").append($.parseHTML(`<div style="width:100%;">Output properties</div>`)),
+            sortable: true,
+            removable: true,
+            height: 'auto',
+            sortHandle: '.red-ui-editableList-item-handle'
+        });
+
+        if (propertyListInit.length > 0) {
+            blockPropertyContainer.editableList('addItems', propertyListInit);
+        } else {
+            blockPropertyContainerZero.show();
+        }
+    }
+
+    function propertyHtmlItem(block, type, key, value) {
+            idProp++;
+            block.append(`
+                <div>
+                    <input class="red-ui-typedInput input-error property-key" type="text" id="node-input-prop-${idProp}-key" style="width: 30%;" value="${key}">
+                    <input type="hidden" id="node-input-prop-${idProp}-type" class="property-type" value="${type}">
+                    <div style="display:inline-block; padding:0px 6px;">=</div>
+                    <input class="red-ui-typedInput property-value" type="text" style="width: calc(70% - 30px);" value="${value}">
+                </div>
+            `);
+
+            $(`#node-input-prop-${idProp}-key`).typedInput({
+                type:"msg",
+                types:["msg", "flow", "global"],
+                typeField: `#node-input-prop-${idProp}-type`
+            });
+        }
+
+    function sessionEntityListValidationType(entity) {
+        try {
+            const valor =
+                typeof entity === 'object' &&
+                'id' in entity &&
+                'list' in entity &&
+                Array.isArray(entity.list) &&
+                entity.list.length > 0;
+            return valor;
+        } catch (error) {
+            console.error('Erro ao validar entityListType', error);
+            return false;
+        }
+    }
+
+    function sessionEntityListGetId() {
+        const entityListString = localStorage.getItem('andrerodrigue5_entity_list');
+        if(!entityListString) {
+            return '';
+        }
+        try {
+            const entityList = JSON.parse(entityListString);
+            if(sessionEntityListValidationType(entityList)) {
+                return entityList.id;
+            }
+            return '';
+        } catch (error) {
+            console.error('Erro ao analisar a lista de entidades do localStorage:', error);
+            return '';
+        }
+    }
+
+    function sessionEntityListValidation(serverId){
+        const entityListString = localStorage.getItem('andrerodrigue5_entity_list');
+        if (entityListString) {
+            try {
+                const entityList = JSON.parse(entityListString);
+                return sessionEntityListValidationType(entityList) && entityList.id === serverId;
+            } catch (error) {
+                console.error('Erro ao analisar a lista de entidades do localStorage:', error);
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function sessionEntityListGetList() {
+        const entityListString = localStorage.getItem('andrerodrigue5_entity_list');
+        if (entityListString) {
+            try {
+                const entityList = JSON.parse(entityListString);
+                if (sessionEntityListValidationType(entityList)) {
+                    return entityList.list;
+                }
+            } catch (error) {
+                console.error('Erro ao analisar a lista de entidades do localStorage:', error);
+            }
+        }
+        return [];
+    }
+
+    function sessionEntityListSave(serverId, entityList) {
+        try {
+            const entityListString = JSON.stringify({
+                id: serverId,
+                list: entityList
+            });
+            localStorage.setItem('andrerodrigue5_entity_list', entityListString);
+        } catch (error) {
+            console.error('Erro ao salvar a lista de entidades no localStorage:', error);
+        }
+    }
+
+    function sessionEntityListDelete() {
+        localStorage.removeItem('andrerodrigue5_entity_list');
+    }
+</script>
+
