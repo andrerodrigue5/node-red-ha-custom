@@ -203,7 +203,7 @@ module.exports = (RED) => {
                 node.status({
                     fill: 'green',
                     shape: 'ring',
-                    text: 'conectado'
+                    text: 'connected'
                 });
             });
 
@@ -315,7 +315,7 @@ module.exports = (RED) => {
                 node.status({
                     fill: 'red',
                     shape: 'ring',
-                    text: 'desconectado'
+                    text: 'disconnected'
                 });
                 setTimeout(connect, 5000);
             });
