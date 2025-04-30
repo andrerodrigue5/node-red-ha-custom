@@ -396,6 +396,7 @@ function readThreeway() {
         `;
     }
     function addEventItem(idGroup, data) {
+        const blockItem = $(`#group-item-${idGroup}`);
         const blockItemContainer = $(`#group-container-item-${idGroup}`);
         const blockItemContainerZero = $(`#group-container-item-zero-${idGroup}`);
         const buttonItemRemove = $(`#button-group-remove-${idGroup}`);

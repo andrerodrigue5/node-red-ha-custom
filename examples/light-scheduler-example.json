@@ -1,0 +1,43 @@
+[
+    {
+        "id": "47285c26624422d6",
+        "type": "andrerodrigue5-light-scheduler",
+        "z": "824a7b35e649e71b",
+        "name": "Teste Light Scheduler",
+        "server": "6a7b28e8c4249838",
+        "group": "[{\"name\":\"Desligar 21:30\",\"button\":\"input_boolean.ligar_desligar_21_30\",\"type_on\":\"sunset\",\"run_on\":{\"type\":\"after\",\"minute\":\"20\"},\"hour_on\":\"\",\"type_off\":\"hour\",\"run_off\":{\"type\":\"immediate\",\"minute\":\"\"},\"hour_off\":\"21:30\",\"entity\":[{\"id\":\"input_boolean.luz_21_30_01\",\"friendly_name\":\"Luz 21:30 01\"},{\"id\":\"input_boolean.luz_21_30_02\",\"friendly_name\":\"Luz 21:30 02\"},{\"id\":\"input_boolean.luz_21_30_03\",\"friendly_name\":\"Luz 21:30 03\"}]},{\"name\":\"Delisgar 00:00\",\"button\":\"input_boolean.ligar_desligar_00_00\",\"type_on\":\"sunset\",\"run_on\":{\"type\":\"before\",\"minute\":\"20\"},\"hour_on\":\"\",\"type_off\":\"hour\",\"run_off\":{\"type\":\"immediate\",\"minute\":\"\"},\"hour_off\":\"00:00\",\"entity\":[{\"id\":\"input_boolean.luz_00_00\",\"friendly_name\":\"Luz 00:00\"}]},{\"name\":\"Desliga nascer do sol\",\"button\":\"input_boolean.ligar_desligar_nascer_sol\",\"type_on\":\"sunset\",\"run_on\":{\"type\":\"immediate\",\"minute\":\"\"},\"hour_on\":\"\",\"type_off\":\"sunrise\",\"run_off\":{\"type\":\"before\",\"minute\":\"20\"},\"hour_off\":\"\",\"entity\":[{\"id\":\"input_boolean.luz_nascer_do_sol\",\"friendly_name\":\"Luz nascer do sol\"}]}]",
+        "latitude": "-23.6814346",
+        "longitude": "-46.924947",
+        "property": "[{\"key\":\"payload.teste\",\"type\":\"msg\",\"value\":\"on\"}]",
+        "x": 140,
+        "y": 120,
+        "wires": [
+            [
+                "dbfd3511f8b3ce60"
+            ]
+        ]
+    },
+    {
+        "id": "6a7b28e8c4249838",
+        "type": "server",
+        "name": "Local",
+        "version": 5,
+        "addon": false,
+        "rejectUnauthorizedCerts": true,
+        "ha_boolean": "y|yes|true|on|home|open",
+        "connectionDelay": true,
+        "cacheJson": true,
+        "heartbeat": false,
+        "heartbeatInterval": 30,
+        "areaSelector": "friendlyName",
+        "deviceSelector": "friendlyName",
+        "entitySelector": "friendlyName",
+        "statusSeparator": ": ",
+        "statusYear": "hidden",
+        "statusMonth": "short",
+        "statusDay": "numeric",
+        "statusHourCycle": "default",
+        "statusTimeFormat": "h:m",
+        "enableGlobalContextStore": false
+    }
+]

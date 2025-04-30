@@ -3,7 +3,11 @@
     "version": "1.0.3",
     "description": "A custom Node-RED node for Home Assistant",
     "main": "index.js",
+    "engines": {
+        "node": ">=18.2.0"
+    },
     "node-red": {
+        "version": ">=3.1.1",
         "nodes": {
             "threeway": "threeway/threeway.js",
             "light-scheduler": "light-scheduler/light-scheduler.js"
@@ -23,5 +27,9 @@
         "andrerodrigue5"
     ],
     "author": "André Rodrigues <andrerodrigues@andrerodrigues.com>",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/andrerodrigue5/node-red-ha-custom.git"
+    },
     "license": "MIT"
 }

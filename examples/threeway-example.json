@@ -1,0 +1,65 @@
+[
+    {
+        "id": "de21c5dec7440b70",
+        "type": "tab",
+        "label": "Fluxo 2",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "d47f6e66cee2a444",
+        "type": "andrerodrigue5-threeway",
+        "z": "de21c5dec7440b70",
+        "name": "Teste de Threeway",
+        "server": "6a7b28e8c4249838",
+        "group": "[{\"name\":\"Teste de Threeway\",\"entity\":[{\"id\":\"input_boolean.threeway_1\",\"friendly_name\":\"Threeway 1\"},{\"id\":\"input_boolean.threeway_2\",\"friendly_name\":\"Threeway 2\"},{\"id\":\"input_boolean.threeway_3\",\"friendly_name\":\"Threeway 3\"}]}]",
+        "property": "[{\"key\":\"payload.teste\",\"type\":\"msg\",\"value\":\"on\"}]",
+        "x": 170,
+        "y": 120,
+        "wires": [
+            [
+                "227d221832a0886b"
+            ]
+        ]
+    },
+    {
+        "id": "227d221832a0886b",
+        "type": "debug",
+        "z": "de21c5dec7440b70",
+        "name": "debug 2",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 380,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "6a7b28e8c4249838",
+        "type": "server",
+        "name": "Local",
+        "version": 5,
+        "addon": false,
+        "rejectUnauthorizedCerts": true,
+        "ha_boolean": "y|yes|true|on|home|open",
+        "connectionDelay": true,
+        "cacheJson": true,
+        "heartbeat": false,
+        "heartbeatInterval": 30,
+        "areaSelector": "friendlyName",
+        "deviceSelector": "friendlyName",
+        "entitySelector": "friendlyName",
+        "statusSeparator": ": ",
+        "statusYear": "hidden",
+        "statusMonth": "short",
+        "statusDay": "numeric",
+        "statusHourCycle": "default",
+        "statusTimeFormat": "h:m",
+        "enableGlobalContextStore": false
+    }
+]
