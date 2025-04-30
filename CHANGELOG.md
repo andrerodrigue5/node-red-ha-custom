@@ -1,3 +1,13 @@
+## [1.0.4] - 2025-04-29
+
+### 🇧🇷 Corrigido
+- Correção no botão de remover grupo do threeway
+- Correção do scorecard do pacote para o Node-red library
+
+### 🇺🇸 Fixed
+- Fixed the threeway remove group button
+- Fixed the package scorecard for the Node-red library
+
 ## [1.0.3] - 2025-04-29
 
 ### 🇧🇷 Corrigido
