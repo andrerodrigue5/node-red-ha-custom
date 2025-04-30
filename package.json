@@ -1,6 +1,6 @@
 {
     "name": "@andrerodrigue5/node-red-ha-custom",
-    "version": "1.0.2",
+    "version": "1.0.3",
     "description": "A custom Node-RED node for Home Assistant",
     "main": "index.js",
     "node-red": {

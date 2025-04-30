@@ -1,11 +1,25 @@
 const WebSocket = require('ws');
 
 module.exports = (RED) => {
+    function formatDate() {
+        const date = new Date();
+        const pad = n => String(n).padStart(2, '0');
+
+        const year = date.getFullYear();
+        const month = pad(date.getMonth() + 1); // meses vão de 0 a 11
+        const day = pad(date.getDate());
+        const hours = pad(date.getHours());
+        const minutes = pad(date.getMinutes());
+        const seconds = pad(date.getSeconds());
+    
+        return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+    }
     const addEventDate = (node, text, color) => {
+        const finalText = text === 'date' ? formatDate() : text;
         node.status({
             fill: color === undefined ? 'green' : color,
             shape: 'ring',
-            text: text
+            text: finalText
         });
     };
 
@@ -166,7 +180,6 @@ module.exports = (RED) => {
                 RED.util.setMessageProperty(property, item.key, item.value, true);
             }
         }
-        // RED.util.setMessageProperty(property, 'payload.entity_id', this.entityId, true);
 
         const wsHost = server.credentials.host.replace(/https?:\/\//, '');
         const wsToken = server.credentials.access_token;
@@ -176,6 +189,7 @@ module.exports = (RED) => {
         let nodeRedUserId = null;
         let stateChangedId = null;
         let currentUserId = null;
+        let timeoutChange = null;
 
         const changeIdList = [];
         function connect() {
@@ -216,6 +230,9 @@ module.exports = (RED) => {
                         if(!('context' in data.event) || !('user_id' in data.event.context) || data.event.context.user_id === undefined || data.event.context.user_id === nodeRedUserId) {
                             return;
                         }
+                        if(timeoutChange) {
+                            clearTimeout(timeoutChange);
+                        }
                         const newState = data.event.data.new_state.state;
                         const dateLastChanged = data.event.data.new_state.last_changed;
                         const realEntity = data.event.data.entity_id;
@@ -226,6 +243,7 @@ module.exports = (RED) => {
 
                         const newMsg = RED.util.cloneMessage(property) || {};
                         RED.util.setMessageProperty(newMsg, 'payload.state', newState, true);
+                        RED.util.setMessageProperty(newMsg, 'payload.entity_id', entityList, true);
                         if(otherEntity.length === 0) {
                             node.send(newMsg);
                             return;
@@ -261,7 +279,18 @@ module.exports = (RED) => {
                         addEventDate(node, dateLastChanged, 'green');
                         node.send(newMsg);
                     } else if (data.type === 'result' && changeIdList.length > 0 && changeIdList.includes(data.id)) {
-                        // Adicionar futuramente um validação
+                        if(data.success === true) {
+                            addEventDate(node, 'date', 'green');
+                            timeoutChange = setTimeout(() => {
+                                if(ws.readyState === WebSocket.OPEN) {
+                                    addEventDate(node, 'Connected', 'green')
+                                    return;
+                                }
+                                addEventDate(node, 'disconnected', 'red')
+                            }, 50000);
+                            return;
+                        }
+                        addEventDate(node, 'Error in ' + formatDate(), 'red');
                     } else if (data.type === 'result' && data.id === stateChangedId && data.success === false) {
                         node.error('Inscrição em state_changed do Home Assistant falhou');
                         console.log('Inscrição em state_changed falhou:', data.erro);

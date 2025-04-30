@@ -46,6 +46,12 @@
             border-top: 1px solid #CCC;
             margin-bottom: 0;
         }
+        .group .group-list .item .helper-button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 15px 0 2px;
+            border-top: 1px solid #CCC;
+        }
         .group .group-list .item label.groups-title {
             width: 100%;
             padding-top: 10px;
@@ -159,6 +165,7 @@
         <label for="node-input-longitude">Longitude</label>
         <input type="text" id="node-input-longitude" placeholder="Longitude">
     </div>
+
     <div class="form-row">
         <div class="group">
             <p class="label">Groups</p>
@@ -323,6 +330,7 @@ function readLightScheduler(){
                 addEventItem(idGroup, data);
                 addEntityList(idGroup, data);
                 addAutocompleteItem(idGroup);
+                addAutocompleteButton(idGroup);
             }
 
             buttonAddGroup.click(function(){
@@ -347,6 +355,7 @@ function readLightScheduler(){
                 const typeOn = $('.input-group-type-on', item).val();
                 const runOnType = $('.input-group-run-on-type', item).val();
                 const runOnMinute = $('.input-group-run-on-minute', item).val();
+                const helperButton = $('.input-group-helper-button', item).val();
                 const hourOn = $('.input-group-hour-on', item).val();
                 const typeOff = $('.input-group-type-off', item).val();
                 const runOffType = $('.input-group-run-off-type', item).val();
@@ -362,6 +371,7 @@ function readLightScheduler(){
                 }
                 groupReturn.push({
                     'name': name,
+                    'button': helperButton,
                     'type_on': typeOn,
                     'run_on': {
                         type: runOnType,
@@ -496,10 +506,75 @@ function readLightScheduler(){
         input.val("");
     }
 
+    function addAutocompleteButton(idGroup) {
+        const input = $(`#input-group-helper-button-${idGroup}`);
+        configureAutocompleteButton(input);
+        
+        let lastFilteredEntities = [];
+        input.keypress(function(e) {
+            if (e.which === 13) {
+                const menu = input.autocomplete("widget");
+                const focusedItem = menu.find(".ui-state-focus");
+                if (focusedItem.length > 0) {
+                    return;
+                }
+                e.preventDefault();
+                if (lastFilteredEntities.length === 1) {
+                    input.value = lastFilteredEntities[0].id;
+                    input.autocomplete("close");
+                }
+            }
+        });
+    }
+    function configureAutocompleteButton(input) {
+        input.autocomplete({
+            source: function(request, response) {
+                const term = request.term.toLowerCase();
+                const currentEntityList = getCurrentButtonList();
+                const filtered = availableEntities.filter(availableEntity => {
+                    const notInCurrent = !currentEntityList.includes(availableEntity.id);
+
+                    const matchesTerm =
+                        availableEntity.id.toLowerCase().includes(term) ||
+                        (availableEntity.friendly_name && availableEntity.friendly_name.toLowerCase().includes(term));
+
+                    return notInCurrent && matchesTerm;
+                });
+                response(filtered.map(e => ({
+                    friendly_name: e.friendly_name,
+                    id: e.id
+                })));
+            },
+            minLength: 0,
+            select: function(event, ui) {
+                event.preventDefault();
+                input[0].value = ui.item.id;
+            },
+            focus: function(event, ui) {
+                event.preventDefault();
+            }
+        }).autocomplete("instance")._renderItem = function(ul, item) {
+            return $("<li>")
+                .append(`
+                    <div>
+                        <span style="width: 100%; display: block;">${item.friendly_name}</span>
+                        <span style="width: 100%; display: block; color: #999; font-size: 12px;">${item.id}</span>
+                    </div>
+                `)
+                .appendTo(ul);
+        };
+
+        input.off('click').on('click', function() {
+            if(availableEntities.length > 0) {
+                $(this).autocomplete("search", "");
+            }
+        });
+    }
+
     function addAutocompleteItem(idGroup) {
         const blockConteiner = $(`#group-container-item-${idGroup}`);
         const input = $(`#input-group-entity-id-${idGroup}`);
-        configureAutocomplete(blockConteiner, input);
+        configureAutocompleteItem(blockConteiner, input);
         
         let lastFilteredEntities = [];
         input.keypress(function(e) {
@@ -518,6 +593,26 @@ function readLightScheduler(){
         });
     }
 
+    function getCurrentButtonList() {
+        const list =  $('.input-group-helper-button');
+        if(list.length === 0) {
+            return [];
+        }
+        const returnItem = [];
+        for(const item of list) {
+            const value = item.value;
+            if(value === '') {
+                continue;
+            }
+            returnItem.push(value);
+        }
+        const entityList = $('.group-container-item li');
+        for(const item of entityList) {
+            returnItem.push(item.getAttribute('data-id'));
+        }
+        return returnItem;
+    }
+
     function getCurrentEntityList(blockConteiner) {
         const list =  $('li', blockConteiner);
         if(list.length === 0) {
@@ -530,10 +625,21 @@ function readLightScheduler(){
                 friendly_name: item.getAttribute('data-name')
             });
         }
+        const buttonList = $('.input-group-helper-button');
+        for(const item of buttonList) {
+            const currentValue = item.value;
+            if(currentValue.value === '') {
+                continue;
+            }
+            returnItem.push({
+                id: item.value,
+                friendly_name: ''
+            });
+        }
         return returnItem;
     }
 
-    function configureAutocomplete(blockConteiner, input) {
+    function configureAutocompleteItem(blockConteiner, input) {
         input.autocomplete({
             source: function(request, response) {
                 const term = request.term.toLowerCase();
@@ -547,7 +653,6 @@ function readLightScheduler(){
 
                     return notInCurrent && matchesTerm;
                 });
-                lastFilteredForAutocomplete = filtered;
                 response(filtered.map(e => ({
                     friendly_name: e.friendly_name,
                     id: e.id
@@ -608,6 +713,8 @@ function readLightScheduler(){
 
         const inputName = $(`#input-group-name-${idGroup}`);
 
+        const inputButton = $(`#input-group-helper-button-${idGroup}`);
+
         const inputHourOn = $(`#input-group-hour-on-${idGroup}`);
         const inputHourOff = $(`#input-group-hour-off-${idGroup}`);
         
@@ -647,6 +754,15 @@ function readLightScheduler(){
         if(data.length === 0) {
             blockItemContainerZero.show();
         }
+
+        inputButton.change(function() {
+            const currentValue = inputButton.val();
+            const filter = availableEntities.filter(entity => entity.id === currentValue);
+            if(filter.length === 0) {
+                inputButton.val('');
+                return;
+            }
+        });
 
         inputName.change(function(){
             const value = inputName.val();
@@ -752,6 +868,7 @@ function readLightScheduler(){
         const runOffMinute = typeof data === 'object' && 'run_off' in data && 'minute' in data.run_off ? data.run_off.minute : '';
         const hourOn = data.hour_on || '';
         const hourOff = data.hour_off || '';
+        const helperButton = data.button || '';
 
         return `
             <div class="item" id="group-item-${idGroup}">
@@ -767,7 +884,7 @@ function readLightScheduler(){
 
                 <div class="form-row">
                     <p class="subtitle">Turn on:</p>
-                    <label for="group-type-on-${idGroup}">Type</label>
+                    <label for="input-group-type-on-${idGroup}">Type</label>
                     <select class="input-group-type-on" id="input-group-type-on-${idGroup}" required>
                         <option value="">Select an option</option>
                         <option value="sunrise">Sunrise</option>
@@ -781,7 +898,7 @@ function readLightScheduler(){
                             <option value="after">After</option>
                             <option value="before">Before</option>
                         </select>
-                        <input type="text" class="input-group-run-on-minute" id="input-group-run-on-minute-${idGroup}" placeholder="Time in minutes" value="${runOnMinute}">
+                        <input type="text" class="input-group-run-on-minute" required id="input-group-run-on-minute-${idGroup}" placeholder="Time in minutes" value="${runOnMinute}">
                     </div>
                     <div class="group-hour" id="block-group-hour-on-${idGroup}">
                         <label for="input-group-hour-on-${idGroup}">Hour/Minute</label>
@@ -805,12 +922,17 @@ function readLightScheduler(){
                             <option value="after">After</option>
                             <option value="before">Before</option>
                         </select>
-                        <input class="input-group-run-off-minute" type="text" id="input-group-run-off-minute-${idGroup}" placeholder="Time in minutes" value="${runOffMinute}">
+                        <input class="input-group-run-off-minute" type="text" required id="input-group-run-off-minute-${idGroup}" placeholder="Time in minutes" value="${runOffMinute}">
                     </div>
                     <div class="group-hour" id="block-group-hour-off-${idGroup}">
                         <label for="input-group-hour-off-${idGroup}">Hour/Minute</label>
                         <input type="time" class="input-group-hour-off" required id="input-group-hour-off-${idGroup}" placeholder="00:00" value="${hourOff}">
                     </div>
+                </div>
+
+                <div class="form-row helper-button">
+                    <label for="input-group-helper-button-${idGroup}">Helper button</label>
+                    <input type="text" class="input-group-helper-button" required id="input-group-helper-button-${idGroup}" placeholder="Digite o ID ou Nome da entidade" value="${helperButton}">
                 </div>
 
                 <label class="groups-title">Targets</label>
@@ -819,7 +941,7 @@ function readLightScheduler(){
                     <input type="text" class="group-entity-id-input" id="input-group-entity-id-${idGroup}" placeholder="Digite o ID ou Nome da entidade">
                 </div>
 
-                <div class="red-ui-editableList block-entity-list" id="group-container-item-${idGroup}">
+                <div class="red-ui-editableList block-entity-list group-container-item" id="group-container-item-${idGroup}">
                     <p id="group-container-item-zero-${idGroup}" class="list-zero">Sem entidades no momento</p>
                 </div>
             </div>

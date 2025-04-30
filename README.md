@@ -57,6 +57,20 @@ Este nó permite a sincronização virtual de múltiplos dispositivos configurad
   - `payload.entity_id`: array com as entidades afetadas
   - E quaisquer outras chaves personalizadas dentro de `payload` que o usuário definir
 
+### 🕒 `light-scheduler` – Agendamento inteligente de iluminação
+
+Este nó permite automatizar o acionamento de luzes com base em horários fixos, eventos astronômicos (como nascer/pôr do sol) ou com atraso/antecedência configurável. Ideal para agendar o acendimento ou desligamento de luzes em horários dinâmicos e contextuais.
+
+#### Funcionalidades principais:
+- Agendamento com base em horário fixo (`HH:MM`) ou nascer/pôr do sol
+- Permite adicionar ou subtrair minutos dos eventos astronômicos
+- Suporte a controle por **ajudantes** (ex: `input_boolean`, `input_datetime`, etc)
+- Calcula os horários com base na latitude/longitude configuradas
+  - **Output padrão:**
+  - `payload.state`: `"on"` ou `"off"` no momento da transição
+  - `payload.entity_id`: entidade ou lista de entidades-alvo
+  - E quaisquer outras chaves personalizadas dentro de `payload` que o usuário definir
+
 ---
 
 ## 📦 Instalação
@@ -147,6 +161,20 @@ A node that enables virtual synchronization of multiple switches configured in a
   - `payload.state`: the synchronized current state
   - `payload.entity_id`: an array of the affected entities
   - Any other user-defined message inside `payload`
+
+### 🕒 `light-scheduler` – Smart lighting schedule
+
+This node allows you to automate light activation based on fixed times, astronomical events (such as sunrise/sunset), or with configurable offsets. Ideal for scheduling lights to turn on or off at dynamic, context-aware times.
+
+#### Key features:
+- Scheduling based on fixed time (`HH:MM`) or sunrise/sunset
+- Allows adding or subtracting minutes from astronomical events
+- Supports control via **helper entities** (e.g. `input_boolean`, `input_datetime`, etc)
+- Calculates event times based on configured latitude/longitude
+- **Default output:**
+  - `payload.state`: `"on"` or `"off"` at the moment of transition
+  - `payload.entity_id`: the target entity or list of entities
+  - And any other custom keys within `payload` defined by the user
 
 ---
 
