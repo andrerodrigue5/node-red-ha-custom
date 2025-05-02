@@ -76,8 +76,14 @@ module.exports = (RED) => {
     {
         return typeof group === 'object' &&
             'name' in group &&
+            'button' in group &&
+            'turn_off' in group &&
             'entity' in group &&
-            group.entity.length > 0;
+            group.entity.length > 0 &&
+            (
+                (group.turn_off !== '' && /^[0-9]{1,}$/.test(group.turn_off)) ||
+                group.turn_off === ''
+            );
     }
 
     function filterEntity(entityList) {
@@ -100,11 +106,22 @@ module.exports = (RED) => {
         return parseInt('202020' + wsId);
     }
     
-    function andrerodrigue5Threeway(config) {
+    function andrerodrigue5SwitchSolo(config) {
         RED.nodes.createNode(this, config);
         const node = this;
 
         const server = RED.nodes.getNode(config.server);
+        const wsHost = server.credentials.host.replace(/https?:\/\//, '');
+        const wsToken = server.credentials.access_token;
+
+        const wsUrl = `ws://${wsHost}/api/websocket`;
+        let ws;
+        let nodeRedUserId = null;
+        let stateChangedId = null;
+        let currentUserId = null;
+        let timeoutChange = null;
+        const timeoutOff = {};
+        const changeIdList = [];
         
         // GROUP
         let groupTemp = config.group;
@@ -118,6 +135,7 @@ module.exports = (RED) => {
             return;
         }
 
+        const resetEntities = [];
         const group = {};
         const entityIdGroup = {};
         const monitoredEntities = [];
@@ -131,23 +149,50 @@ module.exports = (RED) => {
             if(entity.length === 0) {
                 continue;
             }
-            idGroup++;
+            const allEntities = [...entity];
 
+            const itemButton = item.button;
+            const reset = item.reset === 'yes';
+            idGroup++;
+            if(itemButton && reset && !resetEntities.includes(itemButton)) {
+                resetEntities.push(itemButton);
+            }
+            if(itemButton && !monitoredEntities.includes(itemButton)) {
+                monitoredEntities.push(itemButton)
+            }
+            if(itemButton) {
+                allEntities.push(itemButton);
+                entityIdGroup[itemButton] = idGroup;
+            }
             for(const entityId of entity) {
+                if(reset && !resetEntities.includes(entityId)) {
+                    resetEntities.push(entityId);
+                }
+                if(itemButton) {
+                    continue;
+                }
                 entityIdGroup[entityId] = idGroup;
                 monitoredEntities.push(entityId)
+            }
+
+            if(item.turn_off) {
+                timeoutOff[idGroup] = null;
             }
 
             group[idGroup] = {
                 id: idGroup,
                 name: item.name,
-                entity: entity
+                turn_off: item.turn_off,
+                button: itemButton,
+                entity: entity,
+                all_entities: allEntities
             };
         }
 
         this.group = group;
         this.entityIdGroup = entityIdGroup;
         this.monitoredEntities = monitoredEntities;
+        this.resetEntities = resetEntities;
         
         // PROPERTY
         let propertyTemp = config.property;
@@ -180,17 +225,6 @@ module.exports = (RED) => {
             }
         }
 
-        const wsHost = server.credentials.host.replace(/https?:\/\//, '');
-        const wsToken = server.credentials.access_token;
-
-        const wsUrl = `ws://${wsHost}/api/websocket`;
-        let ws;
-        let nodeRedUserId = null;
-        let stateChangedId = null;
-        let currentUserId = null;
-        let timeoutChange = null;
-
-        const changeIdList = [];
         function connect() {
             ws = new WebSocket(wsUrl);
 
@@ -232,51 +266,40 @@ module.exports = (RED) => {
                         if(timeoutChange) {
                             clearTimeout(timeoutChange);
                         }
-                        const newState = data.event.data.new_state.state;
-                        const dateLastChanged = data.event.data.new_state.last_changed;
+                        if(!['on', 'off'].includes(data.event.data.new_state.state)) {
+                            return;
+                        }
+                        const currentState = data.event.data.new_state.state === 'on' ? 'on' : 'off';
                         const realEntity = data.event.data.entity_id;
                         const idGroup = node.entityIdGroup[realEntity];
                         const entityGroup = node.group[idGroup];
                         const entityList = entityGroup.entity;
+                        const allEntities = entityGroup.all_entities;
                         const otherEntity = entityList.filter(entityId => entityId !== realEntity);
 
                         const newMsg = RED.util.cloneMessage(property) || {};
-                        RED.util.setMessageProperty(newMsg, 'payload.state', newState, true);
-                        RED.util.setMessageProperty(newMsg, 'payload.entity_id', entityList, true);
+                        RED.util.setMessageProperty(newMsg, 'payload.state', currentState, true);
+                        RED.util.setMessageProperty(newMsg, 'payload.entity_id', allEntities, true);
+
+                        const turnOff = entityGroup.turn_off;
+                        if(turnOff && timeoutOff[idGroup]) {
+                            clearTimeout(timeoutOff[idGroup]);
+                        }
+                        if(turnOff && currentState === 'on') {
+                            const timeTimeout = turnOff * 60 * 1000;
+                            console.log('Ligou = ' + formatDate());
+                            timeoutOff[idGroup] = setTimeout(function() {
+                                console.log('Desligou = ' + formatDate());
+                                sendChangeState(node, allEntities, newMsg);
+                            }, timeTimeout);
+                        }
+
                         if(otherEntity.length === 0) {
                             node.send(newMsg);
                             return;
                         }
 
-                        const grouped = {};
-                        for (const entity of otherEntity) {
-                            const [domain] = entity.split('.');
-                            if (!grouped[domain]) grouped[domain] = [];
-                            grouped[domain].push(entity);
-                        }
-
-                        Object.entries(grouped).forEach(([domain, entities]) => {
-                            let service;
-                            if (domain === 'cover') {
-                                service = newState === 'on' ? 'open_cover' : 'close_cover';
-                            } else {
-                                service = newState === 'on' ? 'turn_on' : 'turn_off';
-                            }
-                            const idUse = idPrefix();
-                            changeIdList.push(idUse);
-                            const callServiceMessage = {
-                                id: idUse,
-                                type: 'call_service',
-                                domain,
-                                service,
-                                service_data: {
-                                    entity_id: entities
-                                }
-                            };
-                            ws.send(JSON.stringify(callServiceMessage));
-                        });
-                        addEventDate(node, dateLastChanged, 'green');
-                        node.send(newMsg);
+                        sendChangeState(node, otherEntity, newMsg);
                     } else if (data.type === 'result' && changeIdList.length > 0 && changeIdList.includes(data.id)) {
                         if(data.success === true) {
                             addEventDate(node, 'date', 'green');
@@ -293,6 +316,26 @@ module.exports = (RED) => {
                     } else if (data.type === 'result' && data.id === stateChangedId && data.success === false) {
                         node.error('Inscrição em state_changed do Home Assistant falhou');
                         console.log('Inscrição em state_changed falhou:', data.erro);
+                    } else if (data.type === 'result' && data.id === stateChangedId && data.success === true && node.resetEntities.length > 0) {
+                        const grouped = {};
+                        for (const entity of node.resetEntities) {
+                            const [domain] = entity.split('.');
+                            if (!grouped[domain]) grouped[domain] = [];
+                            grouped[domain].push(entity);
+                        }
+                        Object.entries(grouped).forEach(([domain, entities]) => {
+                            const service = domain === 'cover' ? 'close_cover' : 'turn_off';
+                            const callServiceMessage = {
+                                id: idPrefix(),
+                                type: 'call_service',
+                                domain,
+                                service,
+                                service_data: {
+                                    entity_id: entities
+                                }
+                            };
+                            ws.send(JSON.stringify(callServiceMessage));
+                        });
                     } else if (data.type === 'auth_invalid') {
                         node.error('Erro na autenticação');
                         console.log('Erro de autenticação:', data.message);
@@ -332,11 +375,37 @@ module.exports = (RED) => {
         }
         connect();
 
+        function sendChangeState(node, entityList, newMsg) {
+            const grouped = {};
+            for (const entity of entityList) {
+                const [domain] = entity.split('.');
+                if (!grouped[domain]) grouped[domain] = [];
+                grouped[domain].push(entity);
+            }
+
+            Object.entries(grouped).forEach(([domain, entities]) => {
+                const idUse = idPrefix();
+                changeIdList.push(idUse);
+                const callServiceMessage = {
+                    id: idUse,
+                    type: 'call_service',
+                    domain,
+                    service: domain === 'cover' ? 'close_cover' : 'turn_off',
+                    service_data: {
+                        entity_id: entities
+                    }
+                };
+                ws.send(JSON.stringify(callServiceMessage));
+            });
+            addEventDate(node, 'date', 'green');
+            node.send(newMsg);
+        }
+
         this.on('close', () => {
             if (ws && ws.readyState === WebSocket.OPEN) {
                 ws.close();
             }
         });
     }
-    RED.nodes.registerType("andrerodrigue5-threeway", andrerodrigue5Threeway);
+    RED.nodes.registerType("andrerodrigue5-switch-solo", andrerodrigue5SwitchSolo);
 };

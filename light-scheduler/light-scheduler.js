@@ -28,7 +28,6 @@ module.exports = (RED) => {
         const serverId = req.params.serverId;
         const serverNode = RED.nodes.getNode(serverId);
         if (!serverNode || !serverNode.credentials || !serverNode.credentials.host || !serverNode.credentials.access_token) {
-            node.warn(`Servidor HA não encontrado ou não configurado: ${serverId}`);
             return res.status(404).json({ error: "Servidor Home Assistant não encontrado ou sem credenciais." });
         }
 

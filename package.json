@@ -1,6 +1,6 @@
 {
     "name": "@andrerodrigue5/node-red-ha-custom",
-    "version": "1.0.4",
+    "version": "1.0.5",
     "description": "A custom Node-RED node for Home Assistant",
     "main": "index.js",
     "engines": {
@@ -10,6 +10,7 @@
         "version": ">=3.1.1",
         "nodes": {
             "threeway": "threeway/threeway.js",
+            "switch": "switch-solo/switch-solo.js",
             "light-scheduler": "light-scheduler/light-scheduler.js"
         }
     },
@@ -21,6 +22,8 @@
         "node-red",
         "home-assistant",
         "threeway",
+        "switch-solo",
+        "switch",
         "light-scheduler",
         "scheduler",
         "light",
