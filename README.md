@@ -71,6 +71,23 @@ Este nó permite automatizar o acionamento de luzes com base em horários fixos,
   - `payload.entity_id`: entidade ou lista de entidades-alvo
   - E quaisquer outras chaves personalizadas dentro de `payload` que o usuário definir
 
+### 🚦 `switch solo` – Controle exclusivo de dispositivos no Home Assistant
+
+Este nó permite criar grupos de entidades onde **apenas uma pode estar ligada por vez**. Ideal para selecionar modos, perfis ou zonas exclusivas de atuação no seu ambiente domótico.
+
+#### Funcionalidades principais:
+- Sincroniza o estado entre múltiplas entidades garantindo que **somente uma esteja ligada**
+- Suporta os domínios: `switch`, `light`, `fan`, `cover`, `input_boolean`
+- Permite definir uma entidade como **botão de controle exclusivo**: apenas ela poderá comandar o grupo
+- Suporte a **desligamento automático (timeoff)** após tempo configurado (em minutos)
+- O grupo pode ser resetado (desligado) automaticamente ao reiniciar o Node-RED
+- Usa a API WebSocket do Home Assistant para atualizações em tempo real
+
+#### Output padrão:
+- `payload.state`: estado atual da entidade que foi ligada/desligada
+- `payload.entity_id`: array com as entidades afetadas
+- E quaisquer outras chaves personalizadas dentro de `payload` que o usuário definir
+
 ---
 
 ## 📦 Instalação
@@ -175,6 +192,23 @@ This node allows you to automate light activation based on fixed times, astronom
   - `payload.state`: `"on"` or `"off"` at the moment of transition
   - `payload.entity_id`: the target entity or list of entities
   - And any other custom keys within `payload` defined by the user
+
+### 🚦 `switch solo` – Exclusive control of Home Assistant entities
+
+This node creates groups of entities where **only one can be ON at a time**. Perfect for mutually exclusive modes, profiles, or zones in your smart home.
+
+#### Main features:
+- Synchronizes states among entities, ensuring **only one is ON**
+- Supports domains: `switch`, `light`, `fan`, `cover`, `input_boolean`
+- Allows assigning a **control button**: only it can toggle the group, ignoring changes from others
+- Supports **auto turn-off (timeoff)** after a configurable number of minutes
+- Can **reset all entities (turn OFF)** when Node-RED restarts
+- Uses Home Assistant's WebSocket API for real-time updates
+
+#### Default output:
+- `payload.state`: current state of the toggled entity
+- `payload.entity_id`: array of affected entities
+- Plus any additional custom keys defined by the user within `payload`
 
 ---
 

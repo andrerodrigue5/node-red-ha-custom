@@ -1,0 +1,65 @@
+[
+    {
+        "id": "7a71de5c2081cdcb",
+        "type": "tab",
+        "label": "Switch solo",
+        "disabled": false,
+        "info": "",
+        "env": []
+    },
+    {
+        "id": "5b3c5fade45bace5",
+        "type": "andrerodrigue5-switch-solo",
+        "z": "7a71de5c2081cdcb",
+        "name": "Teste de switch solo",
+        "server": "6a7b28e8c4249838",
+        "group": "[{\"name\":\"Switch 1\",\"button\":\"input_boolean.switch_1\",\"reset\":\"yes\",\"turn_off\":\"1\",\"entity\":[{\"id\":\"input_boolean.switch_2\",\"friendly_name\":\"Switch 2\"}]},{\"name\":\"Switch 2\",\"button\":\"\",\"reset\":\"yes\",\"turn_off\":\"\",\"entity\":[{\"id\":\"input_boolean.switch_3\",\"friendly_name\":\"Switch 3\"},{\"id\":\"input_boolean.switch_4\",\"friendly_name\":\"Switch 4\"},{\"id\":\"input_boolean.switch_5\",\"friendly_name\":\"Switch 5\"}]}]",
+        "property": "[]",
+        "x": 140,
+        "y": 120,
+        "wires": [
+            [
+                "0175e5e39606ebf1"
+            ]
+        ]
+    },
+    {
+        "id": "0175e5e39606ebf1",
+        "type": "debug",
+        "z": "7a71de5c2081cdcb",
+        "name": "debug 3",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 340,
+        "y": 120,
+        "wires": []
+    },
+    {
+        "id": "6a7b28e8c4249838",
+        "type": "server",
+        "name": "Local",
+        "version": 5,
+        "addon": false,
+        "rejectUnauthorizedCerts": true,
+        "ha_boolean": "y|yes|true|on|home|open",
+        "connectionDelay": true,
+        "cacheJson": true,
+        "heartbeat": false,
+        "heartbeatInterval": 30,
+        "areaSelector": "friendlyName",
+        "deviceSelector": "friendlyName",
+        "entitySelector": "friendlyName",
+        "statusSeparator": ": ",
+        "statusYear": "hidden",
+        "statusMonth": "short",
+        "statusDay": "numeric",
+        "statusHourCycle": "default",
+        "statusTimeFormat": "h:m",
+        "enableGlobalContextStore": false
+    }
+]

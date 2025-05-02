@@ -208,7 +208,7 @@ module.exports = (RED) => {
         // SUN
         const latitude = config.latitude;
         const longitude = config.longitude;
-        const suntime = getSunTimes(latitude, longitude);
+        let suntime;
         
         // GROUP
         let groupTemp = config.group;
@@ -222,75 +222,85 @@ module.exports = (RED) => {
             return;
         }
 
-        let idGroup = 0;
-        const group = {};
-        const entityIdGroup = {};
-        const monitoredEntities = [];
-        for(const item of groupTemp) {
-            if(!validateGroup(item, suntime)) {
-                continue;
-            }
-
-            const entity = filterEntity(item.entity);
-            if(entity.length === 0) {
-                continue;
-            }
-
-            let turnOn;
-            if(suntimeValue.includes(item.type_on)) {
-                turnOn = item.type_on === 'sunrise' ? suntime.sunrise : suntime.sunset;
-                if(runTypeValue.includes(item.run_on.type) && /^[0-9]{1,}$/.test(item.run_on.minute)) {
-                    turnOn = item.run_on.type === 'after' ? addMinutes(turnOn, item.run_on.minute) : subtractMinutes(turnOn, item.run_on.minute);
+        this.dev = false;
+        this.group = {};
+        this.entityIdGroup = {};
+        this.monitoredEntities = [];
+        
+        function renderGroupInit() {
+            let idGroup = 0;
+            const group = {};
+            const entityIdGroup = {};
+            const monitoredEntities = [];
+            suntime = getSunTimes(latitude, longitude);
+            for(const item of groupTemp) {
+                if(!validateGroup(item, suntime)) {
+                    continue;
                 }
-            } else {
-                turnOnSplit = item.hour_on.split(':');
-                turnOn = {
-                    hour: parseInt(turnOnSplit[0]),
-                    minute: parseInt(turnOnSplit[1]),
+    
+                const entity = filterEntity(item.entity);
+                if(entity.length === 0) {
+                    continue;
+                }
+    
+                let turnOn;
+                if(suntimeValue.includes(item.type_on)) {
+                    turnOn = item.type_on === 'sunrise' ? suntime.sunrise : suntime.sunset;
+                    if(runTypeValue.includes(item.run_on.type) && /^[0-9]{1,}$/.test(item.run_on.minute)) {
+                        turnOn = item.run_on.type === 'after' ? addMinutes(turnOn, item.run_on.minute) : subtractMinutes(turnOn, item.run_on.minute);
+                    }
+                } else {
+                    turnOnSplit = item.hour_on.split(':');
+                    turnOn = {
+                        hour: parseInt(turnOnSplit[0]),
+                        minute: parseInt(turnOnSplit[1]),
+                    };
+                }
+                let turnOff;
+                if(suntimeValue.includes(item.type_off)) {
+                    turnOff = item.type_off === 'sunrise' ? suntime.sunrise : suntime.sunset;
+                    if(runTypeValue.includes(item.run_off.type) && /^[0-9]{1,}$/.test(item.run_off.minute)) {
+                        turnOff = item.run_off.type === 'after' ? addMinutes(turnOff, item.run_off.minute) : subtractMinutes(turnOff, item.run_off.minute);
+                    }
+                } else {
+                    turnOffSplit = item.hour_off.split(':');
+                    turnOff = {
+                        hour: parseInt(turnOffSplit[0]),
+                        minute: parseInt(turnOffSplit[1]),
+                    };
+                }
+    
+                idGroup++;
+                entityIdGroup[item.button] = idGroup;
+                monitoredEntities.push(item.button);
+                group[idGroup] = {
+                    id: idGroup,
+                    name: item.name,
+                    button: item.button,
+                    on: turnOn,
+                    off: turnOff,
+                    entity: entity
                 };
             }
-            let turnOff;
-            if(suntimeValue.includes(item.type_off)) {
-                turnOff = item.type_off === 'sunrise' ? suntime.sunrise : suntime.sunset;
-                if(runTypeValue.includes(item.run_off.type) && /^[0-9]{1,}$/.test(item.run_off.minute)) {
-                    turnOff = item.run_off.type === 'after' ? addMinutes(turnOff, item.run_off.minute) : subtractMinutes(turnOff, item.run_off.minute);
-                }
-            } else {
-                turnOffSplit = item.hour_off.split(':');
-                turnOff = {
-                    hour: parseInt(turnOffSplit[0]),
-                    minute: parseInt(turnOffSplit[1]),
+            // Teste in dev
+            if(node.dev) {
+                const dateDev = new Date();
+                const hourDev = parseInt(dateDev.getHours());
+                const minuteDev = parseInt(dateDev.getMinutes());
+                group[100] = {
+                    id: 100,
+                    name: 'Teste',
+                    button: 'input_boolean.ligar_desligar_teste',
+                    on: { hour: hourDev, minute: minuteDev },
+                    off: { hour: hourDev, minute: minuteDev + 1 },
+                    entity: ['input_boolean.luz_21_30_01', 'input_boolean.luz_21_30_02']
                 };
+                node.monitoredEntities = monitoredEntities;
+                node.entityIdGroup = entityIdGroup;
+                node.group = group;
             }
-
-            idGroup++;
-            entityIdGroup[item.button] = idGroup;
-            monitoredEntities.push(item.button);
-            group[idGroup] = {
-                id: idGroup,
-                name: item.name,
-                button: item.button,
-                on: turnOn,
-                off: turnOff,
-                entity: entity
-            };
         }
-        this.monitoredEntities = monitoredEntities;
-        this.entityIdGroup = entityIdGroup;
-        this.group = group;
-
-        // Teste in dev
-        // const dateDev = new Date();
-        // const hourDev = parseInt(dateDev.getHours());
-        // const minuteDev = parseInt(dateDev.getMinutes());
-        // group[100] = {
-        //     id: 100,
-        //     name: 'Teste',
-        //     button: 'input_boolean.ligar_desligar_teste',
-        //     on: { hour: hourDev, minute: minuteDev },
-        //     off: { hour: hourDev, minute: minuteDev + 1 },
-        //     entity: ['input_boolean.luz_21_30_01', 'input_boolean.luz_21_30_02']
-        // };
+        renderGroupInit();
 
         // PROPERTY
         let propertyTemp = config.property;
@@ -332,15 +342,18 @@ module.exports = (RED) => {
             if(minuteNow === currentMinute) {
                 return;
             }
+            if(hourNow === 1 && minuteNow === 1) {
+                renderGroupInit();
+            }
             currentMinute = minuteNow;
-            for (const item of Object.values(group)) {
+            for (const item of Object.values(this.group)) {
                 if(item.on.hour === hourNow && item.on.minute === minuteNow) {
                     runEvent(item.entity, item.button, 'on', hourNow + ':' + minuteNow);
                 } else if(item.off.hour === hourNow && item.off.minute === minuteNow) {
                     runEvent(item.entity, item.button, 'off', hourNow + ':' + minuteNow);
                 }
             }
-        }, 50000);
+        }, node.dev ? 5000 : 50000);
 
         const wsHost = server.credentials.host.replace(/https?:\/\//, '');
         const wsToken = server.credentials.access_token;
