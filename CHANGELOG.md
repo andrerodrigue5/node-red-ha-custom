@@ -1,10 +1,20 @@
-## [1.0.5] - 2025-05-02
+## [1.0.6] - 2025-05-02
 
 ### 🇧🇷 Corrigido
-- 
+- Corrigindo o nó Light Scheduler que só funcionava em dev
 
 ### 🇺🇸 Fixed
-- 
+- Fixed Light Scheduler node that only worked in dev environment
+
+## [1.0.5] - 2025-05-02
+
+### 🇧🇷 Corrigido/Lançamentos
+- Adicionado novo nó de switch solo
+- Correção para buscar o nascer/por do sol todos os dias
+
+### 🇺🇸 Fixed/Feature
+- Added new single switch node
+- Fixed daily sunrise/sunset fetch
 
 ## [1.0.4] - 2025-04-29
 
