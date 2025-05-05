@@ -295,10 +295,10 @@ module.exports = (RED) => {
                     off: { hour: hourDev, minute: minuteDev + 1 },
                     entity: ['input_boolean.luz_21_30_01', 'input_boolean.luz_21_30_02']
                 };
-                node.monitoredEntities = monitoredEntities;
-                node.entityIdGroup = entityIdGroup;
-                node.group = group;
             }
+            node.monitoredEntities = monitoredEntities;
+            node.entityIdGroup = entityIdGroup;
+            node.group = group;
         }
         renderGroupInit();
 
